@@ -1985,9 +1985,9 @@ static int mi_dsi_update_lhbm_cmd_N16_PC(struct dsi_panel *panel,
   u32 cmd_update_index = 0;
   u32 cmd_update_count = 0;
   int j = 0;
-  u8 d1_reg_buf[6] = {0};
-  u8 a9_reg_buf[14] = {0x02, 0x00, 0xB5, 0x2C, 0x2C, 0x00, 0x01,
-                       0x00, 0x87, 0x00, 0x02, 0x25, 0x20, 0x67};
+  u8 a9_reg_buf[21] = {0x02, 0x00, 0xB5, 0x2C, 0x2C, 0x00, 0x01,
+                       0x00, 0x87, 0x00, 0x03, 0x25, 0x00, 0x00,
+                       0x00, 0x01, 0x00, 0x8B, 0x00, 0x00, 0x10};
 
   struct mi_dsi_panel_cfg *mi_cfg = &panel->mi_cfg;
   if (!panel || !panel->cur_mode || !panel->cur_mode->priv_info) {
@@ -1998,45 +1998,40 @@ static int mi_dsi_update_lhbm_cmd_N16_PC(struct dsi_panel *panel,
   if (mi_cfg->feature_val[DISP_FEATURE_FLAT_MODE] == FEATURE_ON ||
       mi_cfg->aod_to_normal_status) {
     if (bl_lvl <= 2047) {
-      a9_reg_buf[12] = (aa_alpha_n16_pb_gir_on_set[bl_lvl] >> 8) & 0xFF;
-      a9_reg_buf[13] = aa_alpha_n16_pb_gir_on_set[bl_lvl] & 0xFF;
+      a9_reg_buf[12] = (aa_alpha_n16_pc_gir_on_set[bl_lvl] >> 8) & 0xFF;
+      a9_reg_buf[13] = aa_alpha_n16_pc_gir_on_set[bl_lvl] & 0xFF;
     } else {
-      a9_reg_buf[12] = (aa_alpha_n16_pb_gir_on_set[2048] >> 8) & 0xFF;
-      a9_reg_buf[13] = aa_alpha_n16_pb_gir_on_set[2048] & 0xFF;
+      a9_reg_buf[12] = (aa_alpha_n16_pc_gir_on_set[2048] >> 8) & 0xFF;
+      a9_reg_buf[13] = aa_alpha_n16_pc_gir_on_set[2048] & 0xFF;
     }
   } else {
     if (bl_lvl <= 2047) {
-      a9_reg_buf[12] = (aa_alpha_n16_pb_gir_off_set[bl_lvl] >> 8) & 0xFF;
-      a9_reg_buf[13] = aa_alpha_n16_pb_gir_off_set[bl_lvl] & 0xFF;
+      a9_reg_buf[12] = (aa_alpha_n16_pc_gir_off_set[bl_lvl] >> 8) & 0xFF;
+      a9_reg_buf[13] = aa_alpha_n16_pc_gir_off_set[bl_lvl] & 0xFF;
     } else {
-      a9_reg_buf[12] = (aa_alpha_n16_pb_gir_off_set[2048] >> 8) & 0xFF;
-      a9_reg_buf[13] = aa_alpha_n16_pb_gir_off_set[2048] & 0xFF;
+      a9_reg_buf[12] = (aa_alpha_n16_pc_gir_off_set[2048] >> 8) & 0xFF;
+      a9_reg_buf[13] = aa_alpha_n16_pc_gir_off_set[2048] & 0xFF;
     }
   }
 
-  DISP_INFO("[%s] bl_lvl = %d, a9 reg alpha= 0x%02X 0x%02X \n", panel->type,
+  DISP_INFO("[%s] bl_lvl = %d, a9 reg alpha= 0x%02X 0x%02X\n", panel->type,
             bl_lvl, a9_reg_buf[12], a9_reg_buf[13]);
 
   switch (type) {
   case DSI_CMD_SET_MI_LOCAL_HBM_NORMAL_WHITE_1000NIT:
     cmd_update_index = DSI_CMD_SET_MI_LOCAL_HBM_NORMAL_WHITE_1000NIT_UPDATE;
-    memcpy(&d1_reg_buf[0], &panel->mi_cfg.lhbm_rgb_param[0], sizeof(u8) * 6);
     break;
   case DSI_CMD_SET_MI_LOCAL_HBM_HLPM_WHITE_1000NIT:
     cmd_update_index = DSI_CMD_SET_MI_LOCAL_HBM_HLPM_WHITE_1000NIT_UPDATE;
-    memcpy(&d1_reg_buf[0], &panel->mi_cfg.lhbm_rgb_param[0], sizeof(u8) * 6);
     break;
   case DSI_CMD_SET_MI_LOCAL_HBM_NORMAL_GREEN_500NIT:
     cmd_update_index = DSI_CMD_SET_MI_LOCAL_HBM_NORMAL_GREEN_500NIT_UPDATE;
-    memcpy(&d1_reg_buf[0], &panel->mi_cfg.lhbm_rgb_param[6], sizeof(u8) * 6);
     break;
   case DSI_CMD_SET_MI_LOCAL_HBM_NORMAL_WHITE_110NIT:
     cmd_update_index = DSI_CMD_SET_MI_LOCAL_HBM_NORMAL_WHITE_110NIT_UPDATE;
-    memcpy(&d1_reg_buf[0], &panel->mi_cfg.lhbm_rgb_param[12], sizeof(u8) * 6);
     break;
   case DSI_CMD_SET_MI_LOCAL_HBM_HLPM_WHITE_110NIT:
     cmd_update_index = DSI_CMD_SET_MI_LOCAL_HBM_HLPM_WHITE_110NIT_UPDATE;
-    memcpy(&d1_reg_buf[0], &panel->mi_cfg.lhbm_rgb_param[12], sizeof(u8) * 6);
     break;
   default:
     DISP_ERROR("[%s] unsupport cmd %s\n", panel->type, cmd_set_prop_map[type]);
@@ -2051,10 +2046,7 @@ static int mi_dsi_update_lhbm_cmd_N16_PC(struct dsi_panel *panel,
       DISP_INFO("[%s] update [%s] mipi_address(0x%02X) index(%d) lenght(%d)\n",
                 panel->type, cmd_set_prop_map[info->type], info->mipi_address,
                 info->index, info->length);
-      if (info->mipi_address == 0xD1) {
-        mi_dsi_panel_update_cmd_set(panel, panel->cur_mode, type, info,
-                                    d1_reg_buf, sizeof(d1_reg_buf));
-      } else if (info->mipi_address == 0xA9) {
+      if (info->mipi_address == 0xA9) {
         mi_dsi_panel_update_cmd_set(panel, panel->cur_mode, type, info,
                                     a9_reg_buf, sizeof(a9_reg_buf));
       }
