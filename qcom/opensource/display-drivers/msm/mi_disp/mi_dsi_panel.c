@@ -2014,6 +2014,13 @@ static int mi_dsi_update_lhbm_cmd_N16_PC(struct dsi_panel *panel,
     }
   }
 
+  if (type == DSI_CMD_SET_MI_LOCAL_HBM_NORMAL_WHITE_110NIT ||
+      type == DSI_CMD_SET_MI_LOCAL_HBM_HLPM_WHITE_110NIT) {
+    a9_reg_buf[11] = 0x65;
+  } else if (type == DSI_CMD_SET_MI_LOCAL_HBM_NORMAL_GREEN_500NIT) {
+    a9_reg_buf[11] = 0xA5;
+  }
+
   DISP_INFO("[%s] bl_lvl = %d, a9 reg alpha= 0x%02X 0x%02X\n", panel->type,
             bl_lvl, a9_reg_buf[12], a9_reg_buf[13]);
 
